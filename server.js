@@ -4,6 +4,7 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const helmet = require("helmet");
 require("dotenv").config();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first");
@@ -45,22 +46,17 @@ mongoose.connect(process.env.MONGO_URI)
 
 /* -------------------- 3. EMAIL TRANSPORTER -------------------- */
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // SSL use karein
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  // Ye settings zaroori hain Render ke liye
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-  dnsTimeout: 10000,
-  // Force IPv4
-  connectionFilters: {
-    family: 4
-  }
+    service: 'gmail', // Cloud routing ke liye 'host' se behtar hai
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS // 16-digit App Password hi hona chahiye
+    },
+    pool: true, // Connection open rakhta hai parallel emails ke liye
+    maxConnections: 3,
+    maxMessages: 10,
+    connectionTimeout: 30000, // Timeout badha diya (30 seconds)
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
 });
 
 transporter.verify((error, success) => {
