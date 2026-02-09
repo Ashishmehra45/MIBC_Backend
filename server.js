@@ -46,17 +46,22 @@ mongoose
   .then(() => console.log("🚀 MongoDB Connected"))
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
+/* -------------------- 3. EMAIL TRANSPORTER (FIXED) -------------------- */
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Render par host se behtar 'service' kaam karti hai
-    pool: true,       // Connection ko 'alive' rakhta hai taaki timeout na ho
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS // Yeh 16-digit App Password hi hona chahiye
-    },
-    // In settings ke bina Render par timeout aayega hi aayega
-    connectionTimeout: 60000, // 1 minute ka buffer
-    greetingTimeout: 60000,
-    socketTimeout: 60000,
+  service: "gmail", // Direct service use karein
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  // Yeh settings Render par IPv6 error ko khatam kar dengi
+  family: 4, // 100% FORCE IPv4 (Important)
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
+  pool: true // Multiple mails ke liye connection open rakhta hai
 });
 
 transporter.verify((error, success) => {
