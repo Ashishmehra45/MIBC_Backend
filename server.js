@@ -4,7 +4,7 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const helmet = require("helmet");
 require("dotenv").config();
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first");
