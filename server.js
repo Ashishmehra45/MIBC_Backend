@@ -45,21 +45,22 @@ mongoose.connect(process.env.MONGO_URI)
 
 /* -------------------- 3. EMAIL TRANSPORTER -------------------- */
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
+  host: "smtp.gmail.com",
   port: 465,
-  secure: true,
+  secure: true, // SSL use karein
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS
   },
-  tls: {
-    // Ye line Render ke liye zaroori hai, ye security check ko thoda relax karti hai
-    rejectUnauthorized: false 
-  },
-  connectionTimeout: 60000, // Timeout 1 minute kar diya
-  greetingTimeout: 60000,
-  socketTimeout: 60000
+  // Ye settings zaroori hain Render ke liye
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
+  dnsTimeout: 10000,
+  // Force IPv4
+  connectionFilters: {
+    family: 4
+  }
 });
 
 transporter.verify((error, success) => {
