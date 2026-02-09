@@ -5,6 +5,9 @@ const nodemailer = require("nodemailer");
 const helmet = require("helmet");
 require("dotenv").config();
 
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
+
 const Membership = require("./model/Membership");
 
 const app = express();
@@ -44,15 +47,15 @@ mongoose.connect(process.env.MONGO_URI)
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Port 465 ke liye true hota hai
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  tls: {
-    rejectUnauthorized: false // Cloud environment mein connection issues avoid karne ke liye
-  }
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000
 });
 
 transporter.verify((error, success) => {
