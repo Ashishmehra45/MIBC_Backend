@@ -44,18 +44,12 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error("❌ DB Connection Error:", err));
 
 /* -------------------- 3. EMAIL TRANSPORTER -------------------- */
-
 const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
+  service: "gmail", // Bas itna kaafi hai, host aur port ki zaroorat nahi
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000
+    pass: process.env.EMAIL_PASS // 16-digit App Password
+  }
 });
 
 transporter.verify((error, success) => {
