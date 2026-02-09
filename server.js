@@ -46,7 +46,7 @@ mongoose.connect(process.env.MONGO_URI)
 /* -------------------- 3. EMAIL TRANSPORTER -------------------- */
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
   auth: {
