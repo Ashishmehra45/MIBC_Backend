@@ -5,7 +5,6 @@ const nodemailer = require("nodemailer");
 const helmet = require("helmet");
 require("dotenv").config();
 
-
 const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first");
 
@@ -19,44 +18,45 @@ const allowedOrigins = [
   "http://127.0.0.1:5500",
   "http://localhost:5500",
   "http://localhost:3000",
-  process.env.CLIENT_URL
+  process.env.CLIENT_URL,
 ].filter(Boolean);
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  }),
+);
 
 app.use(helmet());
 app.use(express.json());
 
 /* -------------------- 2. MONGODB CONNECTION -------------------- */
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("🚀 MongoDB Connected"))
-  .catch(err => console.error("❌ DB Connection Error:", err));
+  .catch((err) => console.error("❌ DB Connection Error:", err));
 
-/* -------------------- 3. EMAIL TRANSPORTER -------------------- */
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Cloud routing ke liye 'host' se behtar hai
+    service: 'gmail', // Render par host se behtar 'service' kaam karti hai
+    pool: true,       // Connection ko 'alive' rakhta hai taaki timeout na ho
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS // 16-digit App Password hi hona chahiye
+        pass: process.env.EMAIL_PASS // Yeh 16-digit App Password hi hona chahiye
     },
-    pool: true, // Connection open rakhta hai parallel emails ke liye
-    maxConnections: 3,
-    maxMessages: 10,
-    connectionTimeout: 30000, // Timeout badha diya (30 seconds)
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
+    // In settings ke bina Render par timeout aayega hi aayega
+    connectionTimeout: 60000, // 1 minute ka buffer
+    greetingTimeout: 60000,
+    socketTimeout: 60000,
 });
 
 transporter.verify((error, success) => {
@@ -74,14 +74,14 @@ app.post("/api/membership", async (req, res) => {
       contactPhone,
       contactEmail,
       companyName,
-      contactMessage
+      contactMessage,
     } = req.body;
 
     // 1. Validation
     if (!contactName || !contactEmail || !contactPhone) {
       return res.status(400).json({
         success: false,
-        error: "Bhai, sabhi mandatory fields bharna zaroori hai!"
+        error: "Bhai, sabhi mandatory fields bharna zaroori hai!",
       });
     }
 
@@ -92,7 +92,7 @@ app.post("/api/membership", async (req, res) => {
       phone: contactPhone,
       email: contactEmail,
       company: companyName,
-      message: contactMessage
+      message: contactMessage,
     });
 
     // 3. Dual Email Logic (Admin + User)
@@ -115,15 +115,15 @@ app.post("/api/membership", async (req, res) => {
             <hr>
             <small>Received on: ${new Date().toLocaleString()}</small>
           </div>
-        `
+        `,
       });
 
-  // --- MAIL B: USER KO CONFIRMATION BHEJNA ---
-await transporter.sendMail({
-    from: `"MIBC Team" <${process.env.EMAIL_USER}>`,
-    to: contactEmail, 
-    subject: `México-India Business Council - Acknowledgement of Your Membership Application`,
-    html: `
+      // --- MAIL B: USER KO CONFIRMATION BHEJNA ---
+      await transporter.sendMail({
+        from: `"MIBC Team" <${process.env.EMAIL_USER}>`,
+        to: contactEmail,
+        subject: `México-India Business Council - Acknowledgement of Your Membership Application`,
+        html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -190,23 +190,21 @@ await transporter.sendMail({
             </div>
         </body>
         </html>
-    `
-});
-      
+    `,
+      });
     } catch (mailError) {
       console.error("❌ Mail sending failed, but data saved to DB:", mailError);
     }
 
     res.status(201).json({
       success: true,
-      message: "Application submitted successfully! Check your email."
+      message: "Application submitted successfully! Check your email.",
     });
-
   } catch (error) {
     console.error("❌ Server Error:", error);
     res.status(500).json({
       success: false,
-      error: "Server mein kuch gadbad hai. Baad mein try karein."
+      error: "Server mein kuch gadbad hai. Baad mein try karein.",
     });
   }
 });
