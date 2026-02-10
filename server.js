@@ -13,27 +13,30 @@ const Membership = require("./model/Membership");
 const app = express();
 
 /* -------------------- 1. MIDDLEWARE -------------------- */
-
 const allowedOrigins = [
   "http://127.0.0.1:5500",
   "http://localhost:5500",
   "http://localhost:3000",
-  "https://mexicoindia.org",
-  process.env.CLIENT_URL,
+  "https://mexicoindia.org", // Aapka production domain
+  process.env.CLIENT_URL,      // Dashboard variable
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Agar origin nahi hai (jaise server-to-server logs) ya allowed list mein hai
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        // Debugging ke liye console log lagaya hai taki Render logs mein dikhe block kyu hua
+        console.log("CORS Blocked for origin:", origin); 
         callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    optionsSuccessStatus: 200 // Older browsers ke liye zaroori hai
   }),
 );
 
