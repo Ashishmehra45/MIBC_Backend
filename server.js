@@ -52,7 +52,6 @@ mongoose
 
 /* -------------------- 3. EMAIL TRANSPORTER (FIXED) -------------------- */
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Direct service use karein
   host: "smtp.gmail.com",
   port: 465,
   secure: true,
