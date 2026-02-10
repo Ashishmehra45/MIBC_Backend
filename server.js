@@ -18,7 +18,7 @@ const allowedOrigins = [
   "http://localhost:5500",
   "http://localhost:3000",
   "https://mexicoindia.org", // Aapka production domain
-  process.env.CLIENT_URL,      // Dashboard variable
+  process.env.CLIENT_URL, // Dashboard variable
 ].filter(Boolean);
 
 app.use(
@@ -29,14 +29,14 @@ app.use(
         callback(null, true);
       } else {
         // Debugging ke liye console log lagaya hai taki Render logs mein dikhe block kyu hua
-        console.log("CORS Blocked for origin:", origin); 
+        console.log("CORS Blocked for origin:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-    optionsSuccessStatus: 200 // Older browsers ke liye zaroori hai
+    optionsSuccessStatus: 200, // Older browsers ke liye zaroori hai
   }),
 );
 
@@ -57,7 +57,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -86,7 +86,7 @@ app.post("/api/membership", async (req, res) => {
     }
 
     // 2. Save to DB
-    const newMembership = await Membership.create({
+    await Membership.create({
       selectedPlan: selectedPlan || "Not Specified",
       name: contactName,
       phone: contactPhone,
@@ -96,13 +96,12 @@ app.post("/api/membership", async (req, res) => {
     });
 
     // 3. Dual Email Logic (Admin + User)
-    try {
-      // --- MAIL A: ADMIN KO DETAILS BHEJNA ---
-      await transporter.sendMail({
-        from: `"MIBC Admin" <${process.env.EMAIL_USER}>`,
-        to: process.env.ADMIN_EMAIL || "ashish6266mehra@gmail.com",
-        subject: `New Lead: ${selectedPlan} - ${contactName}`,
-        html: `
+
+    await transporter.sendMail({
+      from: `"MIBC Admin" <${process.env.EMAIL_USER}>`,
+      to: process.env.ADMIN_EMAIL || "ashish6266mehra@gmail.com",
+      subject: `New Lead: ${selectedPlan} - ${contactName}`,
+      html: `
           <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px;">
             <h2 style="color: #007bff;">New Membership Application</h2>
             <hr>
@@ -116,14 +115,14 @@ app.post("/api/membership", async (req, res) => {
             <small>Received on: ${new Date().toLocaleString()}</small>
           </div>
         `,
-      });
+    });
 
-      // --- MAIL B: USER KO CONFIRMATION BHEJNA ---
-      await transporter.sendMail({
-        from: `"MIBC Team" <${process.env.EMAIL_USER}>`,
-        to: contactEmail,
-        subject: `México-India Business Council - Acknowledgement of Your Membership Application`,
-        html: `
+    // --- MAIL B: USER KO CONFIRMATION BHEJNA ---
+    await transporter.sendMail({
+      from: `"MIBC Team" <${process.env.EMAIL_USER}>`,
+      to: contactEmail,
+      subject: `México-India Business Council - Acknowledgement of Your Membership Application`,
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -191,10 +190,7 @@ app.post("/api/membership", async (req, res) => {
         </body>
         </html>
     `,
-      });
-    } catch (mailError) {
-      console.error("❌ Mail sending failed, but data saved to DB:", mailError);
-    }
+    });
 
     res.status(201).json({
       success: true,
