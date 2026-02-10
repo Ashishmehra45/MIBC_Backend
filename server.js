@@ -5,7 +5,6 @@ const nodemailer = require("nodemailer");
 const helmet = require("helmet");
 require("dotenv").config();
 
-
 const Membership = require("./model/Membership");
 
 const app = express();
@@ -51,12 +50,13 @@ mongoose
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false, // STARTTLS
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
- 
+  greetingTimeout: 60000,
+  connectionTimeout: 60000,
 });
 
 transporter.verify((error, success) => {
@@ -186,7 +186,7 @@ app.post("/api/membership", async (req, res) => {
             </div>
         </body>
         </html>`,
-        })
+        }),
       ]);
     } catch (mailError) {
       console.error("❌ Mail Sending Failed:", mailError);
@@ -198,7 +198,6 @@ app.post("/api/membership", async (req, res) => {
       success: true,
       message: "Application submitted successfully!",
     });
-
   } catch (error) {
     console.error("❌ Critical Server Error:", error);
     res.status(500).json({
