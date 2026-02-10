@@ -18,6 +18,7 @@ const allowedOrigins = [
   "http://127.0.0.1:5500",
   "http://localhost:5500",
   "http://localhost:3000",
+  "https://mexicoindia.org",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
@@ -68,8 +69,6 @@ transporter.verify((error, success) => {
   if (error) console.error("❌ Email Transporter Error:", error);
   else console.log("📧 Email Server is ready to send messages");
 });
-
-/* -------------------- 4. ROUTES -------------------- */
 
 app.post("/api/membership", async (req, res) => {
   try {
