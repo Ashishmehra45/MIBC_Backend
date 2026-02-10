@@ -49,8 +49,8 @@ mongoose
 
 /* -------------------- 3. EMAIL TRANSPORTER (FIXED) -------------------- */
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
   secure: false, // STARTTLS
   auth: {
     user: process.env.EMAIL_USER,
@@ -59,7 +59,7 @@ const transporter = nodemailer.createTransport({
  
 });
 
-transporter.verify((error, success) => {
+ transporter.verify((error, success) => {
   if (error) console.error("❌ Email Transporter Error:", error);
   else console.log("📧 Email Server is ready to send messages");
 });
@@ -185,7 +185,7 @@ app.post("/api/membership", async (req, res) => {
                 </div>
             </div>
         </body>
-        </html>`,
+        </html> `,
         })
       ]);
     } catch (mailError) {
