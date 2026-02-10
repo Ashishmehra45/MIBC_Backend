@@ -5,8 +5,6 @@ const nodemailer = require("nodemailer");
 const helmet = require("helmet");
 require("dotenv").config();
 
-const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
 
 const Membership = require("./model/Membership");
 
@@ -52,13 +50,16 @@ mongoose
 
 /* -------------------- 3. EMAIL TRANSPORTER (FIXED) -------------------- */
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  port: 465,
-  secure: true,
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // STARTTLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    family: 4 // force IPv4
+  }
 });
 
 transporter.verify((error, success) => {
