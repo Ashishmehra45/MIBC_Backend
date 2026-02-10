@@ -52,19 +52,13 @@ mongoose
 
 /* -------------------- 3. EMAIL TRANSPORTER (FIXED) -------------------- */
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  service: "gmail",
   port: 465,
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  // Yeh settings Render par IPv6 error ko khatam kar dengi
-  family: 4, // 100% FORCE IPv4 (Important)
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
-  pool: true // Multiple mails ke liye connection open rakhta hai
 });
 
 transporter.verify((error, success) => {
