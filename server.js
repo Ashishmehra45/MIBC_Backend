@@ -82,7 +82,7 @@ app.post("/api/membership", async (req, res) => {
     if (!contactName || !contactEmail || !contactPhone) {
       return res.status(400).json({
         success: false,
-        error: "Bhai, sabhi mandatory fields bharna zaroori hai!",
+        error: "fill all mandatory fields: name, email, phone",
       });
     }
 
@@ -201,7 +201,7 @@ app.post("/api/membership", async (req, res) => {
     console.error("❌ Server Error:", error);
     res.status(500).json({
       success: false,
-      error: "Server mein kuch gadbad hai. Baad mein try karein.",
+      error: "Server Error. Please try again later.",
     });
   }
 });
