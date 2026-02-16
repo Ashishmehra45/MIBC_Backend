@@ -10,12 +10,20 @@ const app = express();
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(cors({
-  origin: [
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'https://mexicoindia.org',
-    'https://www.mexicoindia.org'
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'https://mexicoindia.org',
+      'https://www.mexicoindia.org'
+    ];
+    // allow requests with no origin (like mobile apps or curl requests or local files)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
   credentials: true
