@@ -14,11 +14,14 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:5500',
       'http://127.0.0.1:5500',
+      'http://localhost:5000',
+      'http://localhost:5001', // Local testing ke liye added
       'https://mexicoindia.org',
       'https://www.mexicoindia.org'
     ];
-    // allow requests with no origin (like mobile apps or curl requests or local files)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    
+    // Check for null origin (direct file opening) or allowed origins
+    if (!origin || origin === 'null' || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
