@@ -249,6 +249,17 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
+app.get("/api/admin/memberships", async (req, res) => {
+  try {
+    // Database se saari entries fetch karein (Latest first)
+    const members = await Membership.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: members });
+  } catch (error) {
+    console.error("❌ Fetch Error:", error);
+    res.status(500).json({ success: false, error: "Data fetch nahi ho paya" });
+  }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
