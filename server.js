@@ -1,12 +1,15 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
+
 require("dotenv").config();
 
+const { Resend } = require("resend"); // Resend Library
 const Membership = require("./model/Membership");
 
+
 const app = express();
+const resend = new Resend(process.env.RESEND_API_KEY); // API Key
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(cors({
@@ -15,12 +18,10 @@ app.use(cors({
       'http://localhost:5500',
       'http://127.0.0.1:5500',
       'http://localhost:5000',
-      'http://localhost:5001', // Local testing ke liye added
+      'http://localhost:5001',
       'https://mexicoindia.org',
       'https://www.mexicoindia.org'
     ];
-    
-    // Check for null origin (direct file opening) or allowed origins
     if (!origin || origin === 'null' || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -32,12 +33,8 @@ app.use(cors({
   credentials: true
 }));
 
-// Handle preflight requests
-// app.options('*', cors());
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
 
 /* -------------------- MONGODB CONNECTION -------------------- */
 mongoose
@@ -45,35 +42,9 @@ mongoose
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
-/* -------------------- EMAIL TRANSPORTER -------------------- */
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-transporter.verify((error, success) => {
-  if (error) console.error("❌ Email Error:", error);
-  else console.log("✅ Email Ready");
-});
-
 /* -------------------- TEST ENDPOINT -------------------- */
 app.get('/', (req, res) => {
-  res.json({ 
-    status: 'Server is running!', 
-    timestamp: new Date().toISOString() 
-  });
-});
-
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: 'API is working!',
-    cors: 'enabled' 
-  });
+  res.json({ status: 'Server is running!', timestamp: new Date().toISOString() });
 });
 
 /* -------------------- MEMBERSHIP API -------------------- */
@@ -81,21 +52,11 @@ app.post("/api/membership", async (req, res) => {
   try {
     console.log("📩 Received Request:", req.body);
 
-    const {
-      selectedPlan,
-      contactName,
-      contactPhone,
-      contactEmail,
-      companyName,
-      contactMessage,
-    } = req.body;
+    const { selectedPlan, contactName, contactPhone, contactEmail, companyName, contactMessage } = req.body;
 
     // Validation
     if (!contactName || !contactEmail || !contactPhone) {
-      return res.status(400).json({
-        success: false,
-        error: "Please fill all required fields.",
-      });
+      return res.status(400).json({ success: false, error: "Please fill all required fields." });
     }
 
     // Save to Database
@@ -110,15 +71,15 @@ app.post("/api/membership", async (req, res) => {
 
     console.log("✅ Saved to DB:", newEntry._id);
 
-    // Send Emails
+    // --- EMAIL LOGIC VIA RESEND ---
+
+    // 1. ADMIN EMAIL (Ye aapko milega)
     try {
-      await Promise.all([
-        // Admin Email
-        transporter.sendMail({
-          from: `"MIBC Admin" <${process.env.EMAIL_USER}>`,
-          to: process.env.ADMIN_EMAIL || "ashish6266mehra@gmail.com",
-          subject: `New Membership: ${selectedPlan} - ${contactName}`,
-          html: `
+      await resend.emails.send({
+        from: 'MIBC Admin <onboarding@resend.dev>', // Testing Sender
+        to: process.env.ADMIN_EMAIL || 'ashish6266mehra@gmail.com', // Aapka verified email
+        subject: `New Membership: ${selectedPlan} - ${contactName}`,
+        html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
               <h2 style="color: #D4AF37;">New Membership Application</h2>
               <hr>
@@ -131,15 +92,22 @@ app.post("/api/membership", async (req, res) => {
               <hr>
               <small>Received: ${new Date().toLocaleString()}</small>
             </div>
-          `,
-        }),
-        
-        // User Confirmation Email
-        transporter.sendMail({
-          from: `"MIBC Team" <${process.env.EMAIL_USER}>`,
-          to: contactEmail,
-          subject: "México-India Business Council - Application Received",
-          html: `
+        `
+      });
+      console.log("✅ Admin Email Sent via Resend");
+    } catch (adminErr) {
+      console.error("⚠️ Admin Email Failed:", adminErr);
+    }
+
+    // 2. USER CONFIRMATION EMAIL (Ye "Royal Design" wala)
+    // NOTE: Testing mode mein ye fail ho sakta hai agar 'contactEmail' verified nahi hai.
+    // Domain verify hone ke baad ye sabko jayega.
+    try {
+      await resend.emails.send({
+        from: 'MIBC Team <onboarding@resend.dev>',
+        to: contactEmail, // User ka email
+        subject: "México-India Business Council - Application Received",
+        html: `
             <!DOCTYPE html>
             <html>
             <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
@@ -174,95 +142,63 @@ app.post("/api/membership", async (req, res) => {
               </div>
             </body>
             </html>
-          `,
-        }),
-      ]);
-      
-      console.log("✅ Emails Sent");
-    } catch (mailError) {
-      console.error("⚠️ Email Failed:", mailError.message);
+        `
+      });
+      console.log("✅ User Email Sent via Resend");
+    } catch (userErr) {
+      console.error("⚠️ User Email Failed (Domain not verified for this recipient):", userErr.message);
     }
 
-    // Success Response
-    return res.status(200).json({
-      success: true,
-      message: "Application submitted successfully! Check your email.",
-    });
+    return res.status(200).json({ success: true, message: "Application submitted successfully! Check your email." });
 
   } catch (error) {
     console.error("❌ Server Error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Internal server error. Please try again.",
-    });
+    return res.status(500).json({ success: false, error: "Internal server error. Please try again." });
   }
 });
 
 /* -------------------- CONTACT API -------------------- */
 app.post("/api/contact", async (req, res) => {
   try {
-    console.log("📩 Contact Request:", req.body);
+    const { name, phone, email, subject, message } = req.body;
 
-    const {
-      name,
-      phone,
-      email,
-      subject,
-      message,
-    } = req.body;
-
-    // Validation
     if (!name || !email || !message) {
-      return res.status(400).json({
-        success: false,
-        error: "Please fill all required fields.",
-      });
+      return res.status(400).json({ success: false, error: "Please fill all required fields." });
     }
 
-    // Send Email to Admin
+    // Send Email to Admin via Resend
     try {
-      await transporter.sendMail({
-        from: `"MIBC Contact Form" <${process.env.EMAIL_USER}>`,
-        to: process.env.ADMIN_EMAIL || "ashish6266mehra@gmail.com",
-        subject: `New Contact Form: ${subject || 'General Inquiry'}`,
+      await resend.emails.send({
+        from: 'MIBC Contact <onboarding@resend.dev>',
+        to: process.env.ADMIN_EMAIL || 'ashish6266mehra@gmail.com',
+        subject: `New Contact: ${subject || 'General Inquiry'}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
             <h2 style="color: #D4AF37;">New Contact Form Submission</h2>
             <hr>
             <p><b>Name:</b> ${name}</p>
             <p><b>Email:</b> ${email}</p>
-            <p><b>Phone:</b> ${phone || "N/A"}</p>
-            <p><b>Subject:</b> ${subject || "General Inquiry"}</p>
+            <p><b>Phone:</b> ${phone}</p>
             <p><b>Message:</b> ${message}</p>
-            <hr>
-            <small>Received: ${new Date().toLocaleString()}</small>
           </div>
-        `,
+        `
       });
-
-      console.log("✅ Contact Email Sent");
-    } catch (mailError) {
-      console.error("⚠️ Email Failed:", mailError.message);
+      console.log("✅ Contact Email Sent via Resend");
+    } catch (err) {
+      console.error("❌ Contact Email Failed:", err);
     }
 
-    // Success Response
-    return res.status(200).json({
-      success: true,
-      message: "Thank you! Your message has been sent successfully.",
-    });
+    return res.status(200).json({ success: true, message: "Message sent successfully." });
 
   } catch (error) {
     console.error("❌ Contact Error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to send message. Please try again.",
-    });
+    return res.status(500).json({ success: false, error: "Failed to send message." });
   }
 });
 
+/* -------------------- ADMIN FETCH API -------------------- */
 app.get("/api/admin/memberships", async (req, res) => {
   try {
-    // Database se saari entries fetch karein (Latest first)
     const members = await Membership.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: members });
   } catch (error) {
