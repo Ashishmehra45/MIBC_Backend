@@ -133,8 +133,6 @@ app.post("/api/membership", async (req, res) => {
     }
   }
 });
-
-/* -------------------- CONTACT API -------------------- */
 app.post("/api/contact", async (req, res) => {
   try {
     const { name, phone, email, subject, message } = req.body;
@@ -239,6 +237,17 @@ app.get("/api/admin/memberships", async (req, res) => {
   } catch (error) {
     console.error("❌ Fetch Error:", error);
     res.status(500).json({ success: false, error: "Data fetch nahi ho paya" });
+  }
+});
+/* -------------------- ADMIN FETCH QUERIES API -------------------- */
+app.get("/api/admin/queries", async (req, res) => {
+  try {
+    // Contact model se saari queries fetch karein (latest first)
+    const queries = await Contact.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: queries });
+  } catch (error) {
+    console.error("❌ Queries Fetch Error:", error);
+    res.status(500).json({ success: false, error: "Queries fetch nahi ho payi" });
   }
 });
 
