@@ -18,6 +18,7 @@ app.use(cors({
       'http://127.0.0.1:5500',
       'http://localhost:5000',
       'http://localhost:5001',
+      'http://localhost:5173', // <--- Bas ye line add hui hai tere frontend ke liye
       'https://mexicoindia.org',
       'https://www.mexicoindia.org'
     ];
