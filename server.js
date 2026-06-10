@@ -6,36 +6,45 @@ require("dotenv").config();
 const sgMail = require("@sendgrid/mail");
 const Contact = require("./model/contact");
 const Membership = require("./model/Membership");
+const TequilaInterest = require("./model/tauilaRegistration");
 
 const app = express();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /* -------------------- MIDDLEWARE -------------------- */
-app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5500',
-      'http://127.0.0.1:5500',
-      'http://localhost:5000',
-      'http://localhost:5001',
-      'http://localhost:5173', // <--- Bas ye line add hui hai tere frontend ke liye
-      'https://mexicoindia.org',
-      'https://mibc-fronted.vercel.app',
-      'https://www.mexicoindia.org'
-    ];
-    if (!origin || origin === 'null' || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: 'GET,POST,PUT,DELETE,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:5000",
+        "http://localhost:5001",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5173", // <--- Bas ye line add hui hai tere frontend ke liye
+        "https://mexicoindia.org",
+        "https://mibc-fronted.vercel.app",
+        "https://www.mexicoindia.org",
+      ];
+      if (
+        !origin ||
+        origin === "null" ||
+        allowedOrigins.indexOf(origin) !== -1
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization",
+    credentials: true,
+  }),
+);
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 /* -------------------- MONGODB CONNECTION -------------------- */
 mongoose
@@ -44,17 +53,29 @@ mongoose
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
 /* -------------------- TEST ENDPOINT -------------------- */
-app.get('/', (req, res) => {
-  res.json({ status: 'Server is running!', timestamp: new Date().toISOString() });
+app.get("/", (req, res) => {
+  res.json({
+    status: "Server is running!",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 /* -------------------- MEMBERSHIP API -------------------- */
 app.post("/api/membership", async (req, res) => {
   try {
-    const { selectedPlan, contactName, contactPhone, contactEmail, companyName, contactMessage } = req.body;
+    const {
+      selectedPlan,
+      contactName,
+      contactPhone,
+      contactEmail,
+      companyName,
+      contactMessage,
+    } = req.body;
 
     if (!contactName || !contactEmail || !contactPhone) {
-      return res.status(400).json({ success: false, error: "Please fill all required fields." });
+      return res
+        .status(400)
+        .json({ success: false, error: "Please fill all required fields." });
     }
 
     const newEntry = await Membership.create({
@@ -70,7 +91,7 @@ app.post("/api/membership", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Application submitted successfully! Check your email."
+      message: "Application submitted successfully! Check your email.",
     });
 
     // Admin Email
@@ -88,17 +109,17 @@ app.post("/api/membership", async (req, res) => {
           <p><b>Company:</b> ${companyName || "N/A"}</p>
           <p><b>Message:</b> ${contactMessage || "N/A"}</p>
         </div>
-      `
+      `,
     };
 
     // User Confirmation Email
-// User Confirmation Email
-   // User Confirmation Email - REPLACE THIS BLOCK
+    // User Confirmation Email
+    // User Confirmation Email - REPLACE THIS BLOCK
     const userEmail = {
       to: contactEmail,
       from: {
         name: "MIBC Team", // Isse 'info' hat jayega
-        email: process.env.SENDER_EMAIL
+        email: process.env.SENDER_EMAIL,
       },
       subject: "México-India Business Council - Application Received",
       html: `
@@ -119,15 +140,11 @@ app.post("/api/membership", async (req, res) => {
             </div>
           </div>
         </div>
-      `
+      `,
     };
-    Promise.allSettled([
-      sgMail.send(adminEmail),
-      sgMail.send(userEmail)
-    ])
+    Promise.allSettled([sgMail.send(adminEmail), sgMail.send(userEmail)])
       .then(() => console.log("✅ Emails Processed"))
-      .catch(err => console.error("❌ Email Error:", err));
-
+      .catch((err) => console.error("❌ Email Error:", err));
   } catch (error) {
     console.error("❌ Server Error:", error);
     if (!res.headersSent) {
@@ -135,13 +152,16 @@ app.post("/api/membership", async (req, res) => {
     }
   }
 });
+
 app.post("/api/contact", async (req, res) => {
   try {
     const { name, phone, email, subject, message } = req.body;
 
     // 1. Basic Validation
     if (!name || !email || !message) {
-      return res.status(400).json({ success: false, error: "Required fields are missing." });
+      return res
+        .status(400)
+        .json({ success: false, error: "Required fields are missing." });
     }
 
     // 2. Database mein Query Save Karna
@@ -151,46 +171,46 @@ app.post("/api/contact", async (req, res) => {
       phone,
       email,
       subject: subject || "General Inquiry",
-      message
+      message,
     });
 
     console.log("✅ Query Saved to DB:", newQuery._id);
 
     // 3. Response pehle bhej do taaki user ko wait na karna pade
-    res.status(200).json({ 
-      success: true, 
-      message: "Your inquiry has been submitted successfully." 
+    res.status(200).json({
+      success: true,
+      message: "Your inquiry has been submitted successfully.",
     });
 
     // 4. Admin Notification Email
     const adminEmail = {
       to: process.env.ADMIN_EMAIL,
       from: process.env.SENDER_EMAIL,
-      subject: `New Inquiry: ${subject || 'General Inquiry'} - ${name}`,
+      subject: `New Inquiry: ${subject || "General Inquiry"} - ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <h2 style="color: #D4AF37; border-bottom: 2px solid #D4AF37; padding-bottom: 10px;">New Contact Submission</h2>
           <p><b>Name:</b> ${name}</p>
           <p><b>Email:</b> ${email}</p>
-          <p><b>Phone:</b> ${phone || 'Not Provided'}</p>
-          <p><b>Subject:</b> ${subject || 'General Inquiry'}</p>
+          <p><b>Phone:</b> ${phone || "Not Provided"}</p>
+          <p><b>Subject:</b> ${subject || "General Inquiry"}</p>
           <p><b>Message:</b></p>
           <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 5px solid #D4AF37;">
             ${message}
           </div>
           <p style="font-size: 12px; color: #777; margin-top: 20px;">Submitted on: ${new Date().toLocaleString()}</p>
         </div>
-      `
+      `,
     };
 
- const userEmail = {
-  to: email,
-  from: {
-    name: "MIBC Team",
-    email: process.env.SENDER_EMAIL
-  },
-  subject: "Inquiry Received - México-India Business Council",
-  html: `
+    const userEmail = {
+      to: email,
+      from: {
+        name: "MIBC Team",
+        email: process.env.SENDER_EMAIL,
+      },
+      subject: "Inquiry Received - México-India Business Council",
+      html: `
     <div style="background-color: #f4f4f4; padding: 20px; font-family: 'Georgia', serif;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #d4af37; border-radius: 8px; overflow: hidden;">
         
@@ -204,7 +224,7 @@ app.post("/api/contact", async (req, res) => {
           
           <p style="font-size: 16px; line-height: 1.6;">Thank you for reaching out to the <b>México-India Business Council</b>.</p>
           
-          <p style="font-size: 16px; line-height: 1.6;">We have received your message regarding "<b>${subject || 'General Inquiry'}</b>" and our team will get back to you shortly.</p>
+          <p style="font-size: 16px; line-height: 1.6;">We have received your message regarding "<b>${subject || "General Inquiry"}</b>" and our team will get back to you shortly.</p>
           
           <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
             <p style="margin: 0; font-size: 16px;">Regards,</p>
@@ -214,15 +234,13 @@ app.post("/api/contact", async (req, res) => {
 
       </div>
     </div>
-  `
-};
+  `,
+    };
 
     // Send Emails in background
-    Promise.allSettled([
-      sgMail.send(adminEmail),
-      sgMail.send(userEmail)
-    ]).then(() => console.log("✅ Contact Emails Dispatched"));
-
+    Promise.allSettled([sgMail.send(adminEmail), sgMail.send(userEmail)]).then(
+      () => console.log("✅ Contact Emails Dispatched"),
+    );
   } catch (error) {
     console.error("❌ Contact Route Error:", error);
     if (!res.headersSent) {
@@ -249,7 +267,80 @@ app.get("/api/admin/queries", async (req, res) => {
     res.status(200).json({ success: true, data: queries });
   } catch (error) {
     console.error("❌ Queries Fetch Error:", error);
-    res.status(500).json({ success: false, error: "Queries fetch nahi ho payi" });
+    res
+      .status(500)
+      .json({ success: false, error: "Queries fetch nahi ho payi" });
+  }
+});
+
+app.post("/api/tequila-interest", async (req, res) => {
+  try {
+    // 1. Pehle pura data destructure karo frontend se jo aa raha hai
+    const {
+      companyName,
+      country,
+      website,
+      productType,
+      crtCertified,
+      exportMarkets,
+      fullName,
+      position,
+      email,
+      phone,
+      preference,
+      hearAboutUs,
+    } = req.body;
+
+    // 2. Basic Validation (Backend side security)
+    if (!companyName || !fullName || !email || !productType) {
+      return res.status(400).json({ 
+          success: false, 
+          message: "Please fill all the required fields." 
+      });
+    }
+
+    // 3. Document create karo. 
+    // IMPORTANT: Make sure ye names tere Mongoose Schema ke sath match karte ho!
+    const newEntry = await TequilaInterest.create({
+      companyName: companyName,
+      country: country,
+      website: website || "N/A", // agar empty aaye toh "N/A"
+      productType: productType,
+      crtCertified: crtCertified,
+      exportMarkets: exportMarkets || "Not Specified",
+      fullName: fullName,
+      position: position,
+      email: email,
+      phone: phone,
+      preference: preference,
+      hearAboutUs: hearAboutUs || "Other",
+    });
+
+    console.log("✅ Tequila Interest Saved:", newEntry._id);
+
+    // 4. Send Success Response
+    res.status(201).json({
+      success: true,
+      message: "Form submitted successfully",
+      data: newEntry,
+    });
+
+  } catch (error) {
+    console.error("❌ Tequila API Error:", error.message);
+    
+    // Custom error message for Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: Object.values(error.errors).map(val => val.message).join(', ')
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 });
 
