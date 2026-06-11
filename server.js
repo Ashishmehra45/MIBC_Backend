@@ -293,13 +293,13 @@ app.post("/api/tequila-interest", async (req, res) => {
 
     // 2. Basic Validation (Backend side security)
     if (!companyName || !fullName || !email || !productType) {
-      return res.status(400).json({ 
-          success: false, 
-          message: "Please fill all the required fields." 
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all the required fields.",
       });
     }
 
-    // 3. Document create karo. 
+    // 3. Document create karo.
     // IMPORTANT: Make sure ye names tere Mongoose Schema ke sath match karte ho!
     const newEntry = await TequilaInterest.create({
       companyName: companyName,
@@ -324,18 +324,41 @@ app.post("/api/tequila-interest", async (req, res) => {
       message: "Form submitted successfully",
       data: newEntry,
     });
-
   } catch (error) {
     console.error("❌ Tequila API Error:", error.message);
-    
+
     // Custom error message for Mongoose validation errors
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
-        message: Object.values(error.errors).map(val => val.message).join(', ')
+        message: Object.values(error.errors)
+          .map((val) => val.message)
+          .join(", "),
       });
     }
 
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+});
+
+app.get("/api/tequila-interest", async (req, res) => {
+  try {
+    // TequilaInterest model se saara data fetch karo
+    // .sort({ createdAt: -1 }) se latest registrations sabse upar aayengi
+    // Note: Iske liye tumhare Mongoose schema me { timestamps: true } hona chahiye
+    const registrations = await TequilaInterest.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: registrations.length,
+      data: registrations,
+    });
+  } catch (error) {
+    console.error("❌ Fetch Error:", error.message);
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
