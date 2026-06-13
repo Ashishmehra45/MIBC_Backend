@@ -367,6 +367,25 @@ app.get("/api/tequila-interest", async (req, res) => {
   }
 });
 
+app.delete("/api/tequila-interest/:id", async (req, res) => {
+  try {
+    const deletedEntry = await TequilaInterest.findByIdAndDelete(req.params.id);
+
+    if (!deletedEntry) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Registration not found" });
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: "Registration deleted successfully" });
+  } catch (error) {
+    console.error("❌ Delete Error:", error.message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
