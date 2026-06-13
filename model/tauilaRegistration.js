@@ -7,7 +7,7 @@ const tequilaSchema = new mongoose.Schema({
   website: { type: String },
   productType: { type: String, required: true },
   crtCertified: { type: String, required: true },
-  exportMarkets: { type: String },
+  
   fullName: { type: String, required: true },
   position: { type: String, required: true },
   email: { type: String, required: true },

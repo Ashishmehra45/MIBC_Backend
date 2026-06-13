@@ -282,7 +282,7 @@ app.post("/api/tequila-interest", async (req, res) => {
       website,
       productType,
       crtCertified,
-      exportMarkets,
+      
       fullName,
       position,
       email,
