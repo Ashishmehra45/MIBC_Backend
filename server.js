@@ -282,7 +282,7 @@ app.post("/api/tequila-interest", async (req, res) => {
       website,
       productType,
       crtCertified,
-      
+   
       fullName,
       position,
       email,
@@ -307,7 +307,6 @@ app.post("/api/tequila-interest", async (req, res) => {
       website: website || "N/A", // agar empty aaye toh "N/A"
       productType: productType,
       crtCertified: crtCertified,
-      exportMarkets: exportMarkets || "Not Specified",
       fullName: fullName,
       position: position,
       email: email,
