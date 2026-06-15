@@ -7,6 +7,10 @@ const sgMail = require("@sendgrid/mail");
 const Contact = require("./model/contact");
 const Membership = require("./model/Membership");
 const TequilaInterest = require("./model/tauilaRegistration");
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { v2: cloudinary } = require("cloudinary"); // <-- Add this
+const Questionnaire = require("./model/Questionnaire");
 
 const app = express();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -53,6 +57,96 @@ mongoose
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
 /* -------------------- TEST ENDPOINT -------------------- */
+// --- 1. CLOUDINARY SETUP ---
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+console.log("Cloudinary configured");
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    // 1. Mimetype check kar rahe hain ki file document hai ya image
+    const isDocument = file.mimetype.includes("pdf") || 
+                       file.mimetype.includes("msword") || 
+                       file.mimetype.includes("officedocument") || 
+                       file.mimetype.includes("powerpoint") ||
+                       file.mimetype.includes("text");
+
+    // 2. Agar document (PDF, DOC, PPT) hai toh 'raw', warna 'image'
+    if (isDocument) {
+      return {
+        folder: "MIBC_Tequila_Questionnaire",
+        resource_type: "raw" // 👈 PDF yahan properly save hoga
+      };
+    } else {
+      return {
+        folder: "MIBC_Tequila_Questionnaire",
+        resource_type: "image",
+        allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"] // Sirf images ke liye formats allow kiye
+      };
+    }
+  },
+});
+
+const upload = multer({ storage: storage });
+
+const uploadMiddleware = upload.fields([
+  { name: "productImage", maxCount: 1 },
+  { name: "brandDeck", maxCount: 1 },
+  { name: "crtCertificate", maxCount: 1 },
+]);
+
+app.post("/api/submit-questionnaire", uploadMiddleware, async (req, res) => {
+  try {
+    // 1. Text fields data frontend se nikal lo
+    const formData = req.body;
+
+    // Checkbox boolean conversion (HTML bhejta hai 'on' agar checked ho)
+    const agreedToTerms = formData.agreedToTerms === "on";
+
+    // 2. Cloudinary URLs file inputs se nikal lo
+    const files = req.files || {};
+    const productImageURL = files["productImage"]
+      ? files["productImage"][0].path
+      : "";
+    const brandDeckURL = files["brandDeck"] ? files["brandDeck"][0].path : "";
+    const crtCertificateURL = files["crtCertificate"]
+      ? files["crtCertificate"][0].path
+      : "";
+
+    // 3. Database me naya document banao
+    const newSubmission = new Questionnaire({
+      ...formData,
+      agreedToTerms: agreedToTerms,
+      productImage: productImageURL,
+      brandDeck: brandDeckURL,
+      crtCertificate: crtCertificateURL,
+    });
+
+    // 4. Save kardo
+    await newSubmission.save();
+
+    console.log("✅ New Questionnaire Submitted:", newSubmission._id);
+
+    // 5. Success response bhej do
+    res.status(201).json({
+      success: true,
+      message: "Questionnaire submitted successfully!",
+    });
+  } catch (error) {
+    console.error("❌ Submission Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error. Could not submit questionnaire.",
+      error: error.message,
+    });
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({
     status: "Server is running!",
@@ -282,7 +376,7 @@ app.post("/api/tequila-interest", async (req, res) => {
       website,
       productType,
       crtCertified,
-   
+
       fullName,
       position,
       email,
