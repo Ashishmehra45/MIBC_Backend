@@ -371,22 +371,18 @@ app.post("/api/tequila-interest", async (req, res) => {
   try {
     // 1. Pehle pura data destructure karo frontend se jo aa raha hai
     const {
-      companyName,
-      country,
-      website,
-      productType,
-      crtCertified,
+      
 
       fullName,
       position,
       email,
       phone,
       preference,
-      hearAboutUs,
+    
     } = req.body;
 
     // 2. Basic Validation (Backend side security)
-    if (!companyName || !fullName || !email || !productType) {
+    if ( !fullName || !email || !phone ) {
       return res.status(400).json({
         success: false,
         message: "Please fill all the required fields.",
@@ -396,17 +392,13 @@ app.post("/api/tequila-interest", async (req, res) => {
     // 3. Document create karo.
     // IMPORTANT: Make sure ye names tere Mongoose Schema ke sath match karte ho!
     const newEntry = await TequilaInterest.create({
-      companyName: companyName,
-      country: country,
-      website: website || "N/A", // agar empty aaye toh "N/A"
-      productType: productType,
-      crtCertified: crtCertified,
+     
       fullName: fullName,
       position: position,
       email: email,
       phone: phone,
       preference: preference,
-      hearAboutUs: hearAboutUs || "Other",
+     
     });
 
     console.log("✅ Tequila Interest Saved:", newEntry._id);
