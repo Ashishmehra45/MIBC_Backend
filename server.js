@@ -147,6 +147,26 @@ app.post("/api/submit-questionnaire", uploadMiddleware, async (req, res) => {
   }
 });
 
+app.get("/api/get-questionnaires", async (req, res) => {
+  try {
+    const submissions = await Questionnaire.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: submissions.length, data: submissions });
+  } catch (error) {
+    console.error("❌ Fetch Error:", error);
+    res.status(500).json({ success: false, message: "Server Error. Could not fetch data." });
+  }
+});
+
+// Delete route bhi add kar lena agar delete button kaam karwana hai
+app.delete("/api/get-questionnaires/:id", async (req, res) => {
+  try {
+    await Questionnaire.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({
     status: "Server is running!",
