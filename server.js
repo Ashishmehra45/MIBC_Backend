@@ -375,7 +375,7 @@ app.get("/api/admin/memberships", async (req, res) => {
     res.status(200).json({ success: true, data: members });
   } catch (error) {
     console.error("❌ Fetch Error:", error);
-    res.status(500).json({ success: false, error: "Data fetch nahi ho paya" });
+    res.status(500).json({ success: false, error: "Data not fetched" });
   }
 });
 /* -------------------- ADMIN FETCH QUERIES API -------------------- */
@@ -388,7 +388,7 @@ app.get("/api/admin/queries", async (req, res) => {
     console.error("❌ Queries Fetch Error:", error);
     res
       .status(500)
-      .json({ success: false, error: "Queries fetch nahi ho payi" });
+      .json({ success: false, error: "Queries not fetched" });
   }
 });
 
