@@ -53,6 +53,7 @@ const questionnaireSchema = new mongoose.Schema({
   tradeEvents: { type: String },
 
   // STEP I: Declaration
+  programTrack: { type: String }, // <-- NEW ADDITION HERE
   agreedToTerms: { type: Boolean, default: false },
   declarationName: { type: String },
   declarationDate: { type: Date }
