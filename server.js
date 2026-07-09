@@ -531,6 +531,20 @@ app.get('/api/Phase-1-leads', async (req, res) => {
   }
 });
 
+// DELETE Route to remove a lead
+app.delete('/api/Phase-1-leads/:id', async (req, res) => {
+  try {
+    const deletedLead = await IntentForm.findByIdAndDelete(req.params.id);
+    if (!deletedLead) {
+      return res.status(404).json({ success: false, message: 'Record not found' });
+    }
+    res.status(200).json({ success: true, message: 'Record deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting lead:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
