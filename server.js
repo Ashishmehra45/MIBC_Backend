@@ -514,6 +514,23 @@ app.post('/api/Phase-1-register', async (req, res) => {
   }
 });
 
+// GET Route to fetch all submitted forms
+app.get('/api/Phase-1-leads', async (req, res) => {
+  try {
+    // Database se saara data nikalenge, latest sabse upar (createdAt: -1)
+    const leads = await IntentForm.find().sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      count: leads.length,
+      data: leads
+    });
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
