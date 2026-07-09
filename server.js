@@ -11,6 +11,7 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { v2: cloudinary } = require("cloudinary"); // <-- Add this
 const Questionnaire = require("./model/Questionnaire");
+const IntentForm = require("./model/phase_1");
 
 const app = express();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -493,6 +494,23 @@ app.delete("/api/tequila-interest/:id", async (req, res) => {
   } catch (error) {
     console.error("❌ Delete Error:", error.message);
     res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
+// Direct POST API for Registration
+app.post('/api/Phase-1-register', async (req, res) => {
+  try {
+    const newLead = new IntentForm(req.body);
+    const savedData = await newLead.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Form submitted successfully!',
+      data: savedData
+    });
+  } catch (error) {
+    console.error('Error saving form data:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 });
 
