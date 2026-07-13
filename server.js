@@ -545,6 +545,34 @@ app.delete('/api/Phase-1-leads/:id', async (req, res) => {
   }
 });
 
+// Nayi API - dusre schema se data lane ke liye
+app.get('/api/company-details', async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email query parameter is required." });
+        }
+
+        // Email ke basis pe dusre database/schema mein search karo
+        const companyRecord = await Questionnaire.findOne({ email: email });
+
+        if (companyRecord) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    companyName: companyRecord.companyName, // Db field name ke hisaab se check kar lena
+                    contactName: companyRecord.contactName
+                }
+            });
+        } else {
+            return res.status(404).json({ success: false, message: "No record found for this email." });
+        }
+    } catch (error) {
+        console.error("Error fetching company details:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
