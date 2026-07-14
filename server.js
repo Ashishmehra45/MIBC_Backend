@@ -573,6 +573,38 @@ app.get('/api/company-details', async (req, res) => {
     }
 });
 
+// Apne actual path ke hisaab se Questionnaire model import karein
+
+
+app.get('/api/full-company-details', async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email required." });
+        }
+
+        // 1. Questionnaire database mein email se search karo
+        const record = await Questionnaire.findOne({ email: email }).lean();
+
+        if (record) {
+            // 2. Poora data 'fullRecord' mein bhej do
+            return res.status(200).json({
+                success: true,
+                data: {
+                    companyName: record.companyName || "Not Available",
+                    contactName: record.contactName || "Not Available",
+                    fullRecord: record // YE POORA DATA FRONTEND KO JAYEGA
+                }
+            });
+        } else {
+            return res.status(404).json({ success: false, message: "No company details found." });
+        }
+    } catch (error) {
+        console.error("Error fetching company details:", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
