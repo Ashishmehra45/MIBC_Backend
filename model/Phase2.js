@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const phase2Schema = new mongoose.Schema({
+    company_name: { 
+        type: String, 
+        required: true,
+        trim: true
+    },
     email: { 
         type: String, 
         required: true,
