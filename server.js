@@ -643,6 +643,35 @@ app.post('/api/phase_2', async (req, res) => {
     }
 });
 
+// GET Route - Fetch all Phase 2 Submissions for Admin View
+app.get('/api/phase_2', async (req, res) => {
+    try {
+        const submissions = await Phase2.find().sort({ createdAt: -1 }); // Latest first
+        res.status(200).json({ 
+            success: true, 
+            count: submissions.length, 
+            data: submissions 
+        });
+    } catch (error) {
+        console.error('Error fetching Phase 2 data:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+});
+
+// DELETE Route - Delete a specific Phase 2 Submission
+app.delete('/api/phase_2/:id', async (req, res) => {
+    try {
+        const deletedSubmission = await Phase2.findByIdAndDelete(req.params.id);
+        if (!deletedSubmission) {
+            return res.status(404).json({ success: false, message: 'Record not found' });
+        }
+        res.status(200).json({ success: true, message: 'Record deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting Phase 2 record:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+});
+
 /* -------------------- SERVER START -------------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
