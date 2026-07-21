@@ -12,6 +12,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { v2: cloudinary } = require("cloudinary"); // <-- Add this
 const Questionnaire = require("./model/Questionnaire");
 const IntentForm = require("./model/phase_1");
+const Phase2 = require("./model/Phase2"); // <-- Add this
 
 const app = express();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -71,33 +72,34 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     // 1. Mimetype check kar rahe hain ki file document hai ya image
-    const isDocument = file.mimetype.includes("pdf") || 
-                       file.mimetype.includes("msword") || 
-                       file.mimetype.includes("officedocument") || 
-                       file.mimetype.includes("powerpoint") ||
-                       file.mimetype.includes("text");
+    const isDocument =
+      file.mimetype.includes("pdf") ||
+      file.mimetype.includes("msword") ||
+      file.mimetype.includes("officedocument") ||
+      file.mimetype.includes("powerpoint") ||
+      file.mimetype.includes("text");
 
     // 2. Agar document (PDF, DOC, PPT) hai toh 'raw', warna 'image'
     if (isDocument) {
       return {
         folder: "MIBC_Tequila_Questionnaire",
-        resource_type: "raw" // 👈 PDF yahan properly save hoga
+        resource_type: "raw", // 👈 PDF yahan properly save hoga
       };
     } else {
       return {
         folder: "MIBC_Tequila_Questionnaire",
         resource_type: "image",
-        allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"] // Sirf images ke liye formats allow kiye
+        allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"], // Sirf images ke liye formats allow kiye
       };
     }
   },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10 MB limit
-  }
+    fileSize: 10 * 1024 * 1024, // 10 MB limit
+  },
 });
 
 const uploadMiddleware = upload.fields([
@@ -156,10 +158,14 @@ app.post("/api/submit-questionnaire", uploadMiddleware, async (req, res) => {
 app.get("/api/get-questionnaires", async (req, res) => {
   try {
     const submissions = await Questionnaire.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: submissions.length, data: submissions });
+    res
+      .status(200)
+      .json({ success: true, count: submissions.length, data: submissions });
   } catch (error) {
     console.error("❌ Fetch Error:", error);
-    res.status(500).json({ success: false, message: "Server Error. Could not fetch data." });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error. Could not fetch data." });
   }
 });
 
@@ -387,28 +393,17 @@ app.get("/api/admin/queries", async (req, res) => {
     res.status(200).json({ success: true, data: queries });
   } catch (error) {
     console.error("❌ Queries Fetch Error:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Queries not fetched" });
+    res.status(500).json({ success: false, error: "Queries not fetched" });
   }
 });
 
 app.post("/api/tequila-interest", async (req, res) => {
   try {
     // 1. Pehle pura data destructure karo frontend se jo aa raha hai
-    const {
-      
-
-      fullName,
-      position,
-      email,
-      phone,
-      preference,
-    
-    } = req.body;
+    const { fullName, position, email, phone, preference } = req.body;
 
     // 2. Basic Validation (Backend side security)
-    if ( !fullName || !email || !phone ) {
+    if (!fullName || !email || !phone) {
       return res.status(400).json({
         success: false,
         message: "Please fill all the required fields.",
@@ -418,13 +413,11 @@ app.post("/api/tequila-interest", async (req, res) => {
     // 3. Document create karo.
     // IMPORTANT: Make sure ye names tere Mongoose Schema ke sath match karte ho!
     const newEntry = await TequilaInterest.create({
-     
       fullName: fullName,
       position: position,
       email: email,
       phone: phone,
       preference: preference,
-     
     });
 
     console.log("✅ Tequila Interest Saved:", newEntry._id);
@@ -498,110 +491,155 @@ app.delete("/api/tequila-interest/:id", async (req, res) => {
 });
 
 // Direct POST API for Registration
-app.post('/api/Phase-1-register', async (req, res) => {
+app.post("/api/Phase-1-register", async (req, res) => {
   try {
     const newLead = new IntentForm(req.body);
     const savedData = await newLead.save();
-    
+
     res.status(201).json({
       success: true,
-      message: 'Form submitted successfully!',
-      data: savedData
+      message: "Form submitted successfully!",
+      data: savedData,
     });
   } catch (error) {
-    console.error('Error saving form data:', error);
-    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    console.error("Error saving form data:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 });
 
 // GET Route to fetch all submitted forms
-app.get('/api/Phase-1-leads', async (req, res) => {
+app.get("/api/Phase-1-leads", async (req, res) => {
   try {
     // Database se saara data nikalenge, latest sabse upar (createdAt: -1)
     const leads = await IntentForm.find().sort({ createdAt: -1 });
-    
+
     res.status(200).json({
       success: true,
       count: leads.length,
-      data: leads
+      data: leads,
     });
   } catch (error) {
-    console.error('Error fetching leads:', error);
-    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    console.error("Error fetching leads:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 });
 
 // DELETE Route to remove a lead
-app.delete('/api/Phase-1-leads/:id', async (req, res) => {
+app.delete("/api/Phase-1-leads/:id", async (req, res) => {
   try {
     const deletedLead = await IntentForm.findByIdAndDelete(req.params.id);
     if (!deletedLead) {
-      return res.status(404).json({ success: false, message: 'Record not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Record not found" });
     }
-    res.status(200).json({ success: true, message: 'Record deleted successfully' });
+    res
+      .status(200)
+      .json({ success: true, message: "Record deleted successfully" });
   } catch (error) {
-    console.error('Error deleting lead:', error);
-    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    console.error("Error deleting lead:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 });
 
 // Nayi API - dusre schema se data lane ke liye
-app.get('/api/company-details', async (req, res) => {
-    try {
-        const email = req.query.email;
-        if (!email) {
-            return res.status(400).json({ success: false, message: "Email query parameter is required." });
-        }
-
-        // Email ke basis pe dusre database/schema mein search karo
-        const companyRecord = await Questionnaire.findOne({ email: email });
-
-        if (companyRecord) {
-            return res.status(200).json({
-                success: true,
-                data: {
-                    companyName: companyRecord.companyName, // Db field name ke hisaab se check kar lena
-                    contactName: companyRecord.contactName
-                }
-            });
-        } else {
-            return res.status(404).json({ success: false, message: "No record found for this email." });
-        }
-    } catch (error) {
-        console.error("Error fetching company details:", error);
-        return res.status(500).json({ success: false, message: "Server error" });
+app.get("/api/company-details", async (req, res) => {
+  try {
+    const email = req.query.email;
+    if (!email) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Email query parameter is required.",
+        });
     }
+
+    // Email ke basis pe dusre database/schema mein search karo
+    const companyRecord = await Questionnaire.findOne({ email: email });
+
+    if (companyRecord) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          companyName: companyRecord.companyName, // Db field name ke hisaab se check kar lena
+          contactName: companyRecord.contactName,
+        },
+      });
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: "No record found for this email." });
+    }
+  } catch (error) {
+    console.error("Error fetching company details:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // Apne actual path ke hisaab se Questionnaire model import karein
 
+app.get("/api/full-company-details", async (req, res) => {
+  try {
+    const email = req.query.email;
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email required." });
+    }
 
-app.get('/api/full-company-details', async (req, res) => {
+    // 1. Questionnaire database mein email se search karo
+    const record = await Questionnaire.findOne({ email: email }).lean();
+
+    if (record) {
+      // 2. Poora data 'fullRecord' mein bhej do
+      return res.status(200).json({
+        success: true,
+        data: {
+          companyName: record.companyName || "Not Available",
+          contactName: record.contactName || "Not Available",
+          fullRecord: record, // YE POORA DATA FRONTEND KO JAYEGA
+        },
+      });
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: "No company details found." });
+    }
+  } catch (error) {
+    console.error("Error fetching company details:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server Error" });
+  }
+});
+
+app.post('/api/phase_2', async (req, res) => {
     try {
-        const email = req.query.email;
-        if (!email) {
-            return res.status(400).json({ success: false, message: "Email required." });
-        }
-
-        // 1. Questionnaire database mein email se search karo
-        const record = await Questionnaire.findOne({ email: email }).lean();
-
-        if (record) {
-            // 2. Poora data 'fullRecord' mein bhej do
-            return res.status(200).json({
-                success: true,
-                data: {
-                    companyName: record.companyName || "Not Available",
-                    contactName: record.contactName || "Not Available",
-                    fullRecord: record // YE POORA DATA FRONTEND KO JAYEGA
-                }
-            });
-        } else {
-            return res.status(404).json({ success: false, message: "No company details found." });
-        }
+        // Create a new document with the request body
+        const newSubmission = new Phase2(req.body);
+        
+        // Save to Database
+        const savedSubmission = await newSubmission.save();
+        
+        res.status(201).json({ 
+            success: true, 
+            message: "Phase 2 evidence submitted successfully!", 
+            data: savedSubmission 
+        });
     } catch (error) {
-        console.error("Error fetching company details:", error);
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error('Error saving Phase 2 submission:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to submit data. Please check the required fields.",
+            error: error.message 
+        });
     }
 });
 
