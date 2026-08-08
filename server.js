@@ -747,6 +747,27 @@ app.post('/api/submit-importer', async (req, res) => {
 });
 
 
+app.get('/api/get-phase3', async (req, res) => {
+    try {
+        const data = await Phase3Submission.find().sort({ createdAt: -1 });
+        res.status(200).json({ success: true, count: data.length, data });
+    } catch (error) {
+        console.error('Error fetching Phase 3:', error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+});
+
+// GET Route: Importer Onboarding Submissions
+app.get('/api/get-importer', async (req, res) => {
+    try {
+        const data = await ImporterOnboarding.find().sort({ createdAt: -1 });
+        res.status(200).json({ success: true, count: data.length, data });
+    } catch (error) {
+        console.error('Error fetching Importers:', error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+});
+
 
 app.post("/api/Membership_Query", async (req, res) => {
   try {
