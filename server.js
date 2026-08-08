@@ -15,6 +15,8 @@ const IntentForm = require("./model/phase_1");
 const Phase2 = require("./model/Phase2"); // <-- Add this
 const Membership_Query = require("./model/Membership_Query"); // <-- Add this
 const Phase3Submission = require("./model/Phase3"); // <-- Add this
+const ImporterOnboarding = require("./model/ImporterOnboarding"); // <-- Add this
+
 
 
 const app = express();
@@ -717,6 +719,25 @@ app.post('/api/submit-phase3', async (req, res) => {
         });
     } catch (error) {
         console.error('Phase 3 Submit Error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server Error. Please try again.', 
+            error: error.message 
+        });
+    }
+});
+
+app.post('/api/submit-importer', async (req, res) => {
+    try {
+        const newImporter = new ImporterOnboarding(req.body);
+        await newImporter.save();
+        
+        res.status(201).json({ 
+            success: true, 
+            message: 'Importer Questionnaire submitted successfully.' 
+        });
+    } catch (error) {
+        console.error('Importer Submit Error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Server Error. Please try again.', 
