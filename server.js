@@ -14,6 +14,7 @@ const Questionnaire = require("./model/Questionnaire");
 const IntentForm = require("./model/phase_1");
 const Phase2 = require("./model/Phase2"); // <-- Add this
 const Membership_Query = require("./model/Membership_Query"); // <-- Add this
+const Phase3Submission = require("./model/Phase3"); // <-- Add this
 
 const app = express();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -702,6 +703,25 @@ app.delete("/api/phase_2/:id", async (req, res) => {
     console.error("Error deleting Phase 2 record:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
+});
+
+app.post('/api/submit-phase3', async (req, res) => {
+    try {
+        const newSubmission = new Phase3Submission(req.body);
+        await newSubmission.save();
+        
+        res.status(201).json({ 
+            success: true, 
+            message: 'Phase 3 Questionnaire submitted successfully.' 
+        });
+    } catch (error) {
+        console.error('Phase 3 Submit Error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server Error. Please try again.', 
+            error: error.message 
+        });
+    }
 });
 
 
