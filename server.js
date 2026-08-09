@@ -16,6 +16,10 @@ const Phase2 = require("./model/Phase2"); // <-- Add this
 const Membership_Query = require("./model/Membership_Query"); // <-- Add this
 const Phase3Submission = require("./model/Phase3"); // <-- Add this
 const ImporterOnboarding = require("./model/ImporterOnboarding"); // <-- Add this
+const CohortUser = require('./model/cohortUser');
+const JWT_SECRET = process.env.JWT_SECRET 
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 
 
@@ -765,6 +769,72 @@ app.get('/api/get-importer', async (req, res) => {
     } catch (error) {
         console.error('Error fetching Importers:', error);
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+});
+
+app.post('/api/cohort-register', async (req, res) => {
+    try {
+        const { fullName, companyName, brandName, email, mobile, address, password } = req.body;
+
+        // Check if user already exists
+        const existingUser = await CohortUser.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'Email is already registered.' });
+        }
+
+        // Hash the password for security
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create new user
+        const newUser = new CohortUser({
+            fullName, companyName, brandName, email, mobile, address, password: hashedPassword
+        });
+
+        await newUser.save();
+
+        res.status(201).json({ success: true, message: 'Account created successfully! You can now login.' });
+    } catch (error) {
+        console.error('Registration Error:', error);
+        res.status(500).json({ success: false, message: 'Server error during registration.', error: error.message });
+    }
+});
+
+// ==========================================
+// LOGIN ROUTE (app.post)
+// ==========================================
+app.post('/api/cohort-login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Check if user exists
+        const user = await CohortUser.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
+        }
+
+        // Compare password with hashed password in DB
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
+        }
+
+        // Generate JWT Token
+        const token = jwt.sign(
+            { id: user._id, email: user.email, companyName: user.companyName },
+            JWT_SECRET,
+            { expiresIn: '1d' } // Token expires in 1 day
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful.',
+            token: token,
+            user: { fullName: user.fullName, companyName: user.companyName }
+        });
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ success: false, message: 'Server error during login.', error: error.message });
     }
 });
 
