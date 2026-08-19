@@ -16,12 +16,12 @@ const Phase2 = require("./model/Phase2"); // <-- Add this
 const Membership_Query = require("./model/Membership_Query"); // <-- Add this
 const Phase3Submission = require("./model/Phase3"); // <-- Add this
 const ImporterOnboarding = require("./model/ImporterOnboarding"); // <-- Add this
-const CohortUser = require('./model/cohortUser');
-const JWT_SECRET = process.env.JWT_SECRET 
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
-
+const CohortUser = require("./model/cohortUser");
+const JWT_SECRET = process.env.JWT_SECRET;
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+// const Vault = require("./model/Vault"); // <-- Add this
+const { VaultFolder, VaultFile } = require("./model/Vault"); // <-- Add this
 
 const app = express();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -312,7 +312,9 @@ app.post("/api/contact", async (req, res) => {
       console.log("✅ Query Saved to DB:", newQuery._id);
     } catch (dbError) {
       console.error("❌ DB Save Error:", dbError);
-      return res.status(500).json({ success: false, error: "Database save failed." });
+      return res
+        .status(500)
+        .json({ success: false, error: "Database save failed." });
     }
 
     const emailSubject = subject || "General Inquiry";
@@ -398,7 +400,10 @@ app.post("/api/contact", async (req, res) => {
       await Promise.all([sgMail.send(adminEmail), sgMail.send(userEmail)]);
       console.log("✅ Contact Emails Dispatched Successfully");
     } catch (emailErr) {
-      console.error("❌ Email Send Error:", emailErr?.response?.body || emailErr);
+      console.error(
+        "❌ Email Send Error:",
+        emailErr?.response?.body || emailErr,
+      );
     }
 
     // 6. Return response to Client
@@ -406,11 +411,12 @@ app.post("/api/contact", async (req, res) => {
       success: true,
       message: "Your inquiry has been submitted successfully.",
     });
-
   } catch (error) {
     console.error("❌ Contact Route Error:", error);
     if (!res.headersSent) {
-      return res.status(500).json({ success: false, error: "Internal server error." });
+      return res
+        .status(500)
+        .json({ success: false, error: "Internal server error." });
     }
   }
 });
@@ -712,132 +718,171 @@ app.delete("/api/phase_2/:id", async (req, res) => {
   }
 });
 
-app.post('/api/submit-phase3', async (req, res) => {
-    try {
-        const newSubmission = new Phase3Submission(req.body);
-        await newSubmission.save();
-        
-        res.status(201).json({ 
-            success: true, 
-            message: 'Phase 3 Questionnaire submitted successfully.' 
-        });
-    } catch (error) {
-        console.error('Phase 3 Submit Error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Server Error. Please try again.', 
-            error: error.message 
-        });
-    }
+app.post("/api/submit-phase3", async (req, res) => {
+  try {
+    const newSubmission = new Phase3Submission(req.body);
+    await newSubmission.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Phase 3 Questionnaire submitted successfully.",
+    });
+  } catch (error) {
+    console.error("Phase 3 Submit Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error. Please try again.",
+      error: error.message,
+    });
+  }
 });
 
-app.post('/api/submit-importer', async (req, res) => {
-    try {
-        const newImporter = new ImporterOnboarding(req.body);
-        await newImporter.save();
-        
-        res.status(201).json({ 
-            success: true, 
-            message: 'Importer Questionnaire submitted successfully.' 
-        });
-    } catch (error) {
-        console.error('Importer Submit Error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Server Error. Please try again.', 
-            error: error.message 
-        });
-    }
+app.post("/api/submit-importer", async (req, res) => {
+  try {
+    const newImporter = new ImporterOnboarding(req.body);
+    await newImporter.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Importer Questionnaire submitted successfully.",
+    });
+  } catch (error) {
+    console.error("Importer Submit Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error. Please try again.",
+      error: error.message,
+    });
+  }
 });
 
-
-app.get('/api/get-phase3', async (req, res) => {
-    try {
-        const data = await Phase3Submission.find().sort({ createdAt: -1 });
-        res.status(200).json({ success: true, count: data.length, data });
-    } catch (error) {
-        console.error('Error fetching Phase 3:', error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
-    }
+app.get("/api/get-phase3", async (req, res) => {
+  try {
+    const data = await Phase3Submission.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    console.error("Error fetching Phase 3:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
+  }
 });
 
 // GET Route: Importer Onboarding Submissions
-app.get('/api/get-importer', async (req, res) => {
-    try {
-        const data = await ImporterOnboarding.find().sort({ createdAt: -1 });
-        res.status(200).json({ success: true, count: data.length, data });
-    } catch (error) {
-        console.error('Error fetching Importers:', error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
-    }
+app.get("/api/get-importer", async (req, res) => {
+  try {
+    const data = await ImporterOnboarding.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    console.error("Error fetching Importers:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
+  }
 });
 
-app.post('/api/cohort-register', async (req, res) => {
-    try {
-        const { fullName, companyName, brandName, email, mobile, address, password } = req.body;
+app.post("/api/cohort-register", async (req, res) => {
+  try {
+    const {
+      fullName,
+      companyName,
+      brandName,
+      email,
+      mobile,
+      address,
+      password,
+    } = req.body;
 
-        // Check if user already exists
-        const existingUser = await CohortUser.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: 'Email is already registered.' });
-        }
-
-        // Hash the password for security
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create new user
-        const newUser = new CohortUser({
-            fullName, companyName, brandName, email, mobile, address, password: hashedPassword
-        });
-
-        await newUser.save();
-
-        res.status(201).json({ success: true, message: 'Account created successfully! You can now login.' });
-    } catch (error) {
-        console.error('Registration Error:', error);
-        res.status(500).json({ success: false, message: 'Server error during registration.', error: error.message });
+    // Check if user already exists
+    const existingUser = await CohortUser.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is already registered." });
     }
+
+    // Hash the password for security
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const newUser = new CohortUser({
+      fullName,
+      companyName,
+      brandName,
+      email,
+      mobile,
+      address,
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Account created successfully! You can now login.",
+      });
+  } catch (error) {
+    console.error("Registration Error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Server error during registration.",
+        error: error.message,
+      });
+  }
 });
 
 // ==========================================
 // LOGIN ROUTE (app.post)
 // ==========================================
-app.post('/api/cohort-login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
+app.post("/api/cohort-login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-        // Check if user exists
-        const user = await CohortUser.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
-        }
-
-        // Compare password with hashed password in DB
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password.' });
-        }
-
-        // Generate JWT Token
-        const token = jwt.sign(
-            { id: user._id, email: user.email, companyName: user.companyName },
-            JWT_SECRET,
-            { expiresIn: '1d' } // Token expires in 1 day
-        );
-
-        res.status(200).json({
-            success: true,
-            message: 'Login successful.',
-            token: token,
-            user: { fullName: user.fullName, companyName: user.companyName }
-        });
-    } catch (error) {
-        console.error('Login Error:', error);
-        res.status(500).json({ success: false, message: 'Server error during login.', error: error.message });
+    // Check if user exists
+    const user = await CohortUser.findOne({ email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email or password." });
     }
-});
 
+    // Compare password with hashed password in DB
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email or password." });
+    }
+
+    // Generate JWT Token
+    const token = jwt.sign(
+      { id: user._id, email: user.email, companyName: user.companyName },
+      JWT_SECRET,
+      { expiresIn: "1d" }, // Token expires in 1 day
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      token: token,
+      user: { fullName: user.fullName, companyName: user.companyName },
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Server error during login.",
+        error: error.message,
+      });
+  }
+});
 
 app.post("/api/Membership_Query", async (req, res) => {
   try {
@@ -854,7 +899,13 @@ app.post("/api/Membership_Query", async (req, res) => {
     // 2. Save Data to Database
     let newContact;
     try {
-      newContact = await Membership_Query.create({ name, phone, email, company, message });
+      newContact = await Membership_Query.create({
+        name,
+        phone,
+        email,
+        company,
+        message,
+      });
       console.log("✅ Contact Form Saved to DB:", newContact._id);
     } catch (dbError) {
       console.error("❌ DB Save Error:", dbError);
@@ -928,8 +979,146 @@ app.post("/api/Membership_Query", async (req, res) => {
   } catch (error) {
     console.error("❌ Contact API Error:", error);
     if (!res.headersSent) {
-      return res.status(500).json({ success: false, error: "Internal server error." });
+      return res
+        .status(500)
+        .json({ success: false, error: "Internal server error." });
     }
+  }
+});
+
+
+app.post("/api/vault/folders", async (req, res) => {
+  try {
+    const { name, parentId } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: "Folder name is required" });
+    }
+
+    const newFolder = await VaultFolder.create({ 
+      name, 
+      parentId: parentId || 'root' 
+    });
+
+    res.status(201).json({ success: true, folder: newFolder });
+  } catch (error) {
+    console.error("❌ Error creating folder:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
+// 2. GET ALL FOLDERS
+app.get("/api/vault/folders", async (req, res) => {
+  try {
+    const folders = await VaultFolder.find().sort({ createdAt: 1 });
+    res.status(200).json({ success: true, folders });
+  } catch (error) {
+    console.error("❌ Error fetching folders:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
+// 3. UPLOAD A FILE (Using your existing Cloudinary Upload Middleware)
+// Frontend se key name 'file' aur 'folderId' aana chahiye
+app.post("/api/vault/files", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const { folderId } = req.body;
+
+    // Convert file size to readable format (KB / MB)
+    let sizeText = (req.file.size / 1024).toFixed(1) + ' KB';
+    if (req.file.size > 1024 * 1024) {
+      sizeText = (req.file.size / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // req.file.path Cloudinary URL return karta hai teri config ke hisaab se
+    const newFile = await VaultFile.create({
+      name: req.file.originalname,
+      type: req.file.mimetype,
+      size: sizeText,
+      url: req.file.path, // 👈 CLOUDINARY URL
+      folderId: folderId || 'root'
+    });
+
+    console.log("✅ New Vault File Uploaded to Cloudinary:", newFile._id);
+
+    res.status(201).json({ success: true, file: newFile });
+  } catch (error) {
+    console.error("❌ Error uploading vault file:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
+// 4. GET ALL FILES
+app.get("/api/vault/files", async (req, res) => {
+  try {
+    const files = await VaultFile.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, files });
+  } catch (error) {
+    console.error("❌ Error fetching vault files:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
+
+// ==============================================
+app.put("/api/vault/folders/:id", async (req, res) => {
+  try {
+    const updatedFolder = await VaultFolder.findByIdAndUpdate(
+      req.params.id, 
+      { name: req.body.name }, 
+      { new: true }
+    );
+    res.json({ success: true, folder: updatedFolder });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==============================================
+// 2. DELETE FOLDER (DELETE)
+// ==============================================
+app.delete("/api/vault/folders/:id", async (req, res) => {
+  try {
+    // Note: Ek proper system mein iske andar ki files aur sub-folders bhi delete hone chahiye.
+    // Abhi ke liye hum sirf main folder delete kar rahe hain.
+    await VaultFolder.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Folder deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==============================================
+// 3. RENAME FILE (PUT)
+// ==============================================
+app.put("/api/vault/files/:id", async (req, res) => {
+  try {
+    const updatedFile = await VaultFile.findByIdAndUpdate(
+      req.params.id, 
+      { name: req.body.name }, 
+      { new: true }
+    );
+    res.json({ success: true, file: updatedFile });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==============================================
+// 4. DELETE FILE (DELETE)
+// ==============================================
+app.delete("/api/vault/files/:id", async (req, res) => {
+  try {
+    // Note: Cloudinary se physically delete karne ke liye Cloudinary SDK ka uploader.destroy() lagta hai
+    // Par abhi hum sirf DB se record hata rahe hain.
+    await VaultFile.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "File deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
