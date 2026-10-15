@@ -39,7 +39,7 @@ app.use(
         "http://localhost:5175",
         "http://localhost:5173", // <--- Bas ye line add hui hai tere frontend ke liye
         "https://mexicoindia.org",
-        "https://mibc-five.vercel.app/",
+        "https://mibc-five.vercel.app",
         "https://mibc-fronted.vercel.app",
         "https://www.mexicoindia.org",
       ];
